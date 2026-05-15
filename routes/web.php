@@ -24,7 +24,7 @@ Route::get('/@{username}', [ProfileController::class, 'show'])->where('username'
 
 Route::resource('posts', PostController::class)->only(['index', 'show']);
 Route::get('/polls/{token}', App\Http\Controllers\PollVoteController::class)
-    ->where('token', '[A-Za-z0-9]+');
+    ->where('token', '[A-Za-z0-9]{32}');
 
 Route::controller(AuthController::class)->group(function () {
     Route::get('/auth/register', 'showRegister');

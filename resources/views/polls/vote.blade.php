@@ -9,6 +9,7 @@
         id="app"
         data-props='@json([
             "token" => $token,
+            "isAuthenticated" => auth()->check(),
         ])'
     ></div>
 </x-vue-app-layout>
