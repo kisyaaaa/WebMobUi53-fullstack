@@ -8,17 +8,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PollOption extends Model
 {
-    /**
-     * Get the poll that owns the option.
-     */
+    protected $fillable = ['poll_id', 'label'];
+
     public function poll(): BelongsTo
     {
         return $this->belongsTo(Poll::class);
     }
 
-    /**
-     * Get the votes for this option.
-     */
     public function votes(): HasMany
     {
         return $this->hasMany(PollVote::class);
