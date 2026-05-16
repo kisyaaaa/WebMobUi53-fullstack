@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { useFetchApi } from '@/composables/useFetchApi';
 import PollVoteForm from './components/PollVoteForm.vue';
+import PollResultsChart from './components/PollResultsChart.vue';
 
 const props = defineProps({
   token: { type: String, required: true },
@@ -10,10 +11,11 @@ const props = defineProps({
 
 const { fetchApi } = useFetchApi();
 const poll = ref(null);
+const results = ref(null);
 const error = ref(null);
 const loading = ref(true);
 
-onMounted(async () => {
+async function loadPoll() {
   try {
     poll.value = await fetchApi({ url: `polls/by-token/${props.token}` });
   } catch (err) {
@@ -21,11 +23,26 @@ onMounted(async () => {
   } finally {
     loading.value = false;
   }
+}
+
+async function loadResults() {
+  try {
+    results.value = await fetchApi({
+      url: `polls/by-token/${props.token}/results`,
+    });
+  } catch (err) {
+    results.value = null;
+  }
+}
+
+onMounted(async () => {
+  await loadPoll();
+  if (poll.value) await loadResults();
 });
 </script>
 
 <template>
-  <main class="max-w-2xl mx-auto p-4">
+  <main class="max-w-2xl mx-auto p-4 space-y-6">
     <p v-if="loading" class="text-gray-500">Chargement...</p>
 
     <div
@@ -35,14 +52,17 @@ onMounted(async () => {
       {{ error }}
     </div>
 
-    <div v-else>
-      <h1 class="text-2xl font-bold mb-2">{{ poll.question }}</h1>
-      <p v-if="poll.title" class="text-sm text-gray-500 mb-4">{{ poll.title }}</p>
+    <div v-else class="space-y-6">
+      <div>
+        <h1 class="text-2xl font-bold mb-2">{{ poll.question }}</h1>
+        <p v-if="poll.title" class="text-sm text-gray-500">{{ poll.title }}</p>
+      </div>
 
       <PollVoteForm
         v-if="poll.status === 'active' && isAuthenticated"
         :poll="poll"
         :token="token"
+        @voted="loadResults"
       />
 
       <div
@@ -51,6 +71,8 @@ onMounted(async () => {
       >
         Connectez-vous pour voter.
       </div>
+
+      <PollResultsChart v-if="results" :results="results" />
     </div>
   </main>
 </template>
