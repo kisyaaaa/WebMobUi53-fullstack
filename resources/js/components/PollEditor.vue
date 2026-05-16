@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { usePollStore } from '@/stores/usePollStore';
 
 const props = defineProps({
@@ -28,6 +28,10 @@ const form = ref({
   duration: null,
 });
 
+// Options en mémoire avant la création (mode "nouveau")
+const localOptions = ref([]);
+let tempIdCounter = -1;
+
 const newOptionLabel = ref('');
 const editingOptionId = ref(null);
 const editingOptionLabel = ref('');
@@ -40,6 +44,14 @@ const durationOptions = [
   { value: 86400, label: '1 jour' },
   { value: 604800, label: '7 jours' },
 ];
+
+const displayedOptions = computed(() =>
+  localPollId.value ? (currentPoll.value?.options ?? []) : localOptions.value
+);
+
+const canEditOptions = computed(() =>
+  !localPollId.value || currentPoll.value?.status === 'draft'
+);
 
 onMounted(async () => {
   if (props.pollId) {
@@ -65,6 +77,11 @@ async function save() {
     } else {
       const poll = await createPoll(form.value);
       localPollId.value = poll.id;
+      for (const opt of localOptions.value) {
+        await addOption(poll.id, opt.label);
+      }
+      localOptions.value = [];
+      await fetchOne(poll.id);
     }
   } finally {
     saving.value = false;
@@ -73,8 +90,12 @@ async function save() {
 
 async function onAddOption() {
   const label = newOptionLabel.value.trim();
-  if (!label || !localPollId.value) return;
-  await addOption(localPollId.value, label);
+  if (!label) return;
+  if (localPollId.value) {
+    await addOption(localPollId.value, label);
+  } else {
+    localOptions.value.push({ id: tempIdCounter--, label });
+  }
   newOptionLabel.value = '';
 }
 
@@ -86,13 +107,22 @@ function startEditOption(option) {
 async function saveOptionEdit() {
   const label = editingOptionLabel.value.trim();
   if (!label) return;
-  await updateOption(localPollId.value, editingOptionId.value, label);
+  if (localPollId.value) {
+    await updateOption(localPollId.value, editingOptionId.value, label);
+  } else {
+    const opt = localOptions.value.find(o => o.id === editingOptionId.value);
+    if (opt) opt.label = label;
+  }
   editingOptionId.value = null;
 }
 
 async function onRemoveOption(optionId) {
-  if (confirm('Supprimer cette option ?')) {
+  if (!confirm('Supprimer cette option ?')) return;
+  if (localPollId.value) {
     await removeOption(localPollId.value, optionId);
+  } else {
+    const idx = localOptions.value.findIndex(o => o.id === optionId);
+    if (idx >= 0) localOptions.value.splice(idx, 1);
   }
 }
 </script>
@@ -171,12 +201,12 @@ async function onRemoveOption(optionId) {
       </button>
     </form>
 
-    <section v-if="localPollId" class="mt-6 bg-white border rounded p-4">
+    <section class="mt-6 bg-white border rounded p-4">
       <h2 class="text-lg font-bold mb-3">Options</h2>
 
       <ul class="space-y-2 mb-3">
         <li
-          v-for="option in currentPoll?.options ?? []"
+          v-for="option in displayedOptions"
           :key="option.id"
           class="flex items-center gap-2"
         >
@@ -203,14 +233,14 @@ async function onRemoveOption(optionId) {
           <template v-else>
             <span class="flex-1">{{ option.label }}</span>
             <button
-              v-if="currentPoll?.status === 'draft'"
+              v-if="canEditOptions"
               @click="startEditOption(option)"
               class="bg-gray-200 px-3 py-1 rounded hover:bg-gray-300"
             >
               Modifier
             </button>
             <button
-              v-if="currentPoll?.status === 'draft'"
+              v-if="canEditOptions"
               @click="onRemoveOption(option.id)"
               class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
             >
@@ -220,7 +250,7 @@ async function onRemoveOption(optionId) {
         </li>
       </ul>
 
-      <div v-if="currentPoll?.status === 'draft'" class="flex gap-2">
+      <div v-if="canEditOptions" class="flex gap-2">
         <input
           v-model="newOptionLabel"
           type="text"
