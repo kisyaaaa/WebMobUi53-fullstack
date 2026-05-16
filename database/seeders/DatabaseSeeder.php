@@ -139,32 +139,86 @@ class DatabaseSeeder extends Seeder
                     ]
                 ]);
 
-                // Insert 10 test polls for John Doe
-                for ($i = 1; $i <= 10; $i++) {
-                    DB::table('polls')->insert([
-                        'id' => $i,
-                        'user_id' => 1,
-                        'title' => 'test',
-                        'question' => 'Quelle est votre réponse ?',
-                        'secret_token' => \Illuminate\Support\Str::random(32),
+                                // 5 sondages variés pour John Doe
+                $pollsData = [
+                    [
+                        'id' => 1,
+                        'title' => 'Tech préférences',
+                        'question' => 'Quel est ton langage de programmation préféré ?',
+                        'is_draft' => false,
+                        'allow_multiple_choices' => false,
+                        'results_public' => true,
+                        'started_at' => new \DateTime('2026-05-10 09:00:00'),
+                        'options' => ['JavaScript', 'Python', 'PHP', 'Rust', 'Go'],
+                    ],
+                    [
+                        'id' => 2,
+                        'title' => 'Frameworks frontend',
+                        'question' => 'Quels frameworks frontend utilises-tu régulièrement ?',
+                        'is_draft' => false,
+                        'allow_multiple_choices' => true,
+                        'results_public' => true,
+                        'started_at' => new \DateTime('2026-05-12 14:00:00'),
+                        'options' => ['Vue.js', 'React', 'Angular', 'Svelte', 'Solid'],
+                    ],
+                    [
+                        'id' => 3,
+                        'title' => null,
+                        'question' => 'Es-tu pour le télétravail ?',
                         'is_draft' => true,
                         'allow_multiple_choices' => false,
-                        'allow_vote_change' => false,
                         'results_public' => false,
-                        'duration' => null,
-                        'started_at' => null,
-                        'ends_at' => null,
+                        'options' => ['Oui, totalement', 'Hybride', 'Non, présentiel uniquement'],
+                    ],
+                    [
+                        'id' => 4,
+                        'title' => 'OS de dev (sondage terminé)',
+                        'question' => 'Quel système d\'exploitation utilises-tu pour développer ?',
+                        'is_draft' => false,
+                        'allow_multiple_choices' => false,
+                        'results_public' => true,
+                        'duration' => 86400,
+                        'started_at' => new \DateTime('2026-04-20 10:00:00'),
+                        'ends_at' => new \DateTime('2026-04-21 10:00:00'),
+                        'options' => ['Linux', 'macOS', 'Windows', 'BSD'],
+                    ],
+                    [
+                        'id' => 5,
+                        'title' => 'Soirée idéale',
+                        'question' => 'Quelles activités du soir préfères-tu ?',
+                        'is_draft' => true,
+                        'allow_multiple_choices' => true,
+                        'results_public' => false,
+                        'options' => ['Lecture', 'Cinéma', 'Sport', 'Cuisine', 'Jeux vidéo', 'Musique'],
+                    ],
+                ];
+
+                foreach ($pollsData as $data) {
+                    DB::table('polls')->insert([
+                        'id' => $data['id'],
+                        'user_id' => 1,
+                        'title' => $data['title'],
+                        'question' => $data['question'],
+                        'secret_token' => \Illuminate\Support\Str::random(32),
+                        'is_draft' => $data['is_draft'],
+                        'allow_multiple_choices' => $data['allow_multiple_choices'],
+                        'allow_vote_change' => false,
+                        'results_public' => $data['results_public'],
+                        'duration' => $data['duration'] ?? null,
+                        'started_at' => $data['started_at'] ?? null,
+                        'ends_at' => $data['ends_at'] ?? null,
                         'created_at' => new \DateTime('2026-04-19 10:00:00'),
                         'updated_at' => new \DateTime('2026-04-19 10:00:00'),
                     ]);
 
-                    // Insert options for the poll
-                    DB::table('poll_options')->insert([
-                        ['poll_id' => $i, 'label' => 'Réponse A', 'created_at' => new \DateTime('2026-04-19 10:00:00'), 'updated_at' => new \DateTime('2026-04-19 10:00:00')],
-                        ['poll_id' => $i, 'label' => 'Réponse B', 'created_at' => new \DateTime('2026-04-19 10:00:00'), 'updated_at' => new \DateTime('2026-04-19 10:00:00')],
-                        ['poll_id' => $i, 'label' => 'Réponse C', 'created_at' => new \DateTime('2026-04-19 10:00:00'), 'updated_at' => new \DateTime('2026-04-19 10:00:00')],
-                        ['poll_id' => $i, 'label' => 'La réponse D', 'created_at' => new \DateTime('2026-04-19 10:00:00'), 'updated_at' => new \DateTime('2026-04-19 10:00:00')],
-                    ]);
+                    foreach ($data['options'] as $label) {
+                        DB::table('poll_options')->insert([
+                            'poll_id' => $data['id'],
+                            'label' => $label,
+                            'created_at' => new \DateTime('2026-04-19 10:00:00'),
+                            'updated_at' => new \DateTime('2026-04-19 10:00:00'),
+                        ]);
+                    }
                 }
             }
         );
