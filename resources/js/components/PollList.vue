@@ -60,9 +60,9 @@ const statusColor = {
         :key="poll.id"
         class="bg-white border rounded p-4"
       >
-        <div class="flex items-center justify-between mb-2">
-          <div>
-            <p class="font-semibold">{{ poll.question }}</p>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
+          <div class="min-w-0">
+            <p class="font-semibold break-words">{{ poll.question }}</p>
             <span
               :class="statusColor[poll.status]"
               class="inline-block text-xs px-2 py-0.5 rounded mt-1"
@@ -71,7 +71,7 @@ const statusColor = {
             </span>
           </div>
 
-          <div class="flex gap-2">
+          <div class="flex flex-wrap gap-2">
             <button
               v-if="poll.status === 'draft'"
               @click="onStart(poll.id)"
@@ -97,13 +97,13 @@ const statusColor = {
 
         <div
           v-if="poll.status !== 'draft'"
-          class="flex items-center gap-2 mt-2 text-sm"
+          class="flex flex-col sm:flex-row sm:items-center gap-2 mt-2 text-sm"
         >
           <input
             type="text"
             :value="poll.share_url"
             readonly
-            class="flex-1 border rounded px-2 py-1 bg-gray-50 text-gray-600"
+            class="flex-1 min-w-0 border rounded px-2 py-1 bg-gray-50 text-gray-600"
           />
           <button
             @click="onCopy(poll)"
