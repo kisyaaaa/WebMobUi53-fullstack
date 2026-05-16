@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useFetchApi } from '@/composables/useFetchApi';
+import { usePolling } from '@/composables/usePolling';
 import PollVoteForm from './components/PollVoteForm.vue';
 import PollResultsChart from './components/PollResultsChart.vue';
 
@@ -39,6 +40,8 @@ onMounted(async () => {
   await loadPoll();
   if (poll.value) await loadResults();
 });
+
+usePolling(loadResults, 5000);
 </script>
 
 <template>
