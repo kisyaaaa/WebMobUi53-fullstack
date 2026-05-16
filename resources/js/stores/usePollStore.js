@@ -12,6 +12,10 @@ export function usePollStore() {
     polls.value = data;
   }
 
+  function clearError() {
+  error.value = null;
+  }
+
   async function fetchAll() {
     try {
       polls.value = await fetchApi({ url: 'polls' });
@@ -124,7 +128,7 @@ export function usePollStore() {
 
   return {
     polls, currentPoll, error,
-    setPolls,
+    setPolls, clearError,
     fetchAll, fetchOne,
     createPoll, updatePoll, deletePoll, startPoll,
     addOption, updateOption, removeOption,
