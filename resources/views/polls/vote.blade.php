@@ -6,10 +6,10 @@
     </x-slot>
 
     <div
-        id="app"
-        data-props='@json([
-            "token" => $token,
-            "isAuthenticated" => auth()->check(),
-        ])'
-    ></div>
+    id="app"
+    data-props="{{ json_encode([
+        'token' => $token,
+        'isAuthenticated' => auth()->check(),
+    ]) }}"
+></div>
 </x-vue-app-layout>
