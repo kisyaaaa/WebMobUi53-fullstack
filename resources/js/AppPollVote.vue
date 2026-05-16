@@ -80,7 +80,7 @@ function formatDate(iso) {
         v-else-if="poll.status === 'active' && !isAuthenticated"
         class="bg-yellow-100 border border-yellow-300 rounded p-4 text-yellow-800"
       >
-        Connectez-vous pour voter.
+        Connectez-vous pour voter — <a href="/auth/login" class="underline">Connexion</a>
       </div>
 
       <div
