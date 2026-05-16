@@ -25,6 +25,8 @@ Application fullstack permettant de créer, configurer et partager des sondages 
 - **Base de données** : SQLite (par défaut)
 - **Authentification** : système existant fourni (sessions Laravel + Sanctum SPA), non modifié
 
+> Voir aussi `README_FRONT.md` (fourni avec le squelette) pour les détails de l'intégration Sanctum SPA + Vue (gestion du CSRF, composable `useFetchApi`, layouts).
+
 ## Installation
 
 ```bash
@@ -54,8 +56,18 @@ L'application est accessible sur <http://127.0.0.1:8000>.
 
 ## Comment tester
 
-- **Dashboard** : <http://127.0.0.1:8000/polls/dashboard> (connexion requise)
+- **Dashboard** : <http://127.0.0.1:8000/polls/dashboard> (connexion requise, accessible via le bouton "Sondages" dans la nav bar)
 - **Page de vote** : copie le lien de partage d'un sondage "En cours" depuis le dashboard
+
+5 sondages sont seedés pour couvrir tous les états :
+
+| # | Titre | Statut | Choix | Résultats publics |
+| --- | --- | --- | --- | --- |
+| 1 | Tech préférences | En cours | Unique | ✓ |
+| 2 | Frameworks frontend | En cours | Multiple | ✓ |
+| 3 | Télétravail | Brouillon | Unique | ✗ |
+| 4 | OS de dev | Terminé | Unique | ✓ |
+| 5 | Soirée idéale | Brouillon | Multiple | ✗ |
 
 ## Choix techniques
 
