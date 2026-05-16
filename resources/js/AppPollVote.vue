@@ -36,12 +36,17 @@ async function loadResults() {
   }
 }
 
-onMounted(async () => {
+async function refresh() {
   await loadPoll();
-  if (poll.value) await loadResults();
-});
+  await loadResults();
+}
 
-usePolling(loadResults, 5000);
+onMounted(refresh);
+usePolling(refresh, 5000);
+
+function formatDate(iso) {
+  return new Date(iso).toLocaleString('fr-FR');
+}
 </script>
 
 <template>
@@ -59,6 +64,9 @@ usePolling(loadResults, 5000);
       <div>
         <h1 class="text-2xl font-bold mb-2">{{ poll.question }}</h1>
         <p v-if="poll.title" class="text-sm text-gray-500">{{ poll.title }}</p>
+        <p v-if="poll.ends_at" class="text-sm text-gray-600 mt-1">
+          Fin : {{ formatDate(poll.ends_at) }}
+        </p>
       </div>
 
       <PollVoteForm
@@ -73,6 +81,20 @@ usePolling(loadResults, 5000);
         class="bg-yellow-100 border border-yellow-300 rounded p-4 text-yellow-800"
       >
         Connectez-vous pour voter.
+      </div>
+
+      <div
+        v-else-if="poll.status === 'ended'"
+        class="bg-gray-100 border border-gray-300 rounded p-4 text-gray-700"
+      >
+        Ce sondage est terminé. Il n'est plus possible de voter.
+      </div>
+
+      <div
+        v-else-if="poll.status === 'draft'"
+        class="bg-gray-100 border border-gray-300 rounded p-4 text-gray-700"
+      >
+        Ce sondage n'est pas encore lancé.
       </div>
 
       <PollResultsChart v-if="results" :results="results" />
