@@ -1,77 +1,104 @@
-# HEIG-VD DévProdMéd Course - Mini-projet
+# Application de sondage — Laravel 12 + Vue 3
 
-Ce dépôt contient le mini-projet à réaliser dans le cadre du cours
-_"[Développement de produit média (DévProdMéd)](https://github.com/heig-vd-devprodmed-course/heig-vd-devprodmed-course)"_
-enseigné à la
-[Haute Ecole d'Ingénierie et de Gestion du Canton de Vaud (HEIG-VD)](https://heig-vd.ch),
-Suisse.
+Mini-projet réalisé dans le cadre du cours [Développement de produit média (DévProdMéd)](https://github.com/heig-vd-devprodmed-course/heig-vd-devprodmed-course) à la HEIG-VD.
 
-## Objectif du mini-projet
+Application fullstack permettant de créer, configurer et partager des sondages avec une page de vote dédiée, des résultats en temps réel et un graphique d'aperçu.
 
-L'objectif de ce mini-projet est de créer un réseau social simple en utilisant le
-framework [Laravel](https://laravel.com/). Ce projet permettra de mettre en pratique les concepts
-appris dans le cours.
+## Fonctionnalités
 
-## Pré-requis
+- Dashboard listant les sondages de l'utilisateur connecté
+- Création, édition, suppression, lancement et partage de sondages
+- Gestion d'options (ajout, modification, suppression — bloquée après lancement)
+- Paramètres configurables : choix multiple, modification du vote, résultats publics, durée
+- Lien de partage unique par sondage (token)
+- Page de vote accessible via ce lien (auth requise pour voter)
+- Accès anonyme aux résultats si `results_public` est activé
+- Affichage en temps réel des résultats via polling toutes les 5s
+- Aperçu graphique des résultats (barres horizontales)
+- Affichage clair quand le sondage est terminé (date de fin)
+- Interface responsive (mobile first)
 
-Afin de lancer ce projet, une stack compatible avec Laravel, est requise.
+## Stack technique
 
-Voici les pré-requis nécessaires :
+- **Backend** : Laravel 12 (API JSON + auth Sanctum SPA)
+- **Frontend** : Vue 3.5 + Vite 7 + Tailwind 4
+- **Base de données** : SQLite (par défaut)
+- **Authentification** : système existant fourni (sessions Laravel + Sanctum SPA), non modifié
 
-- PHP >= 8.0.
-- Composer.
-- Node.js et npm.
-- Une base de données (MySQL, PostgreSQL, SQLite, etc.).
-- Un serveur web (Apache, Nginx, etc.).
+## Installation
 
-[Laravel Herd](https://helm.sh/docs/charts/laravel/) est recommandé pour une installation facile de Laravel et de ses dépendances.
+```bash
+# 1. Installer les dépendances
+npm install && npm run build
+composer install
 
-## Développement local
+# 2. Configurer l'environnement
+cp .env.example .env
+php artisan key:generate
 
-Pour développer et tester le mini-projet en local, voici les étapes à suivre :
+# 3. Créer le lien symbolique pour les fichiers téléversés
+php artisan storage:link
 
-1. Forker ce dépôt
+# 4. Migrer et seeder la base de données
+php artisan migrate --seed
 
-2. Installer les dépendances avec npm et Composer :
+# 5. Lancer les serveurs (Laravel + Vite + queue)
+composer run dev
+```
 
-    ```bash
-    npm install && npm run build
+L'application est accessible sur <http://127.0.0.1:8000>.
 
-    composer install
-    ```
+**Comptes de test** (créés par le seeder) :
+- `john.doe@example.com` / `password`
+- `jane.doe@example.com` / `password`
 
-3. Copier le fichier `.env.example` en `.env`.
-4. Modifier les variables d'environnement si nécessaire (optionnel).
-5. Générer la clé d'application Laravel :
+## Comment tester
 
-    ```bash
-    php artisan key:generate
-    ```
+- **Dashboard** : <http://127.0.0.1:8000/polls/dashboard> (connexion requise)
+- **Page de vote** : copie le lien de partage d'un sondage "En cours" depuis le dashboard
 
-6. Créer le lien symbolique pour les fichiers téléversés :
+## Choix techniques
 
-    ```bash
-    php artisan storage:link
-    ```
+- **Store maison via composable** (`usePollStore`) plutôt que Pinia, pour rester dans les libs vues en cours et garder une approche minimaliste.
+- **Pas de Vue Router** : le dashboard utilise deux `ref()` (`view`, `editingPollId`) pour basculer entre liste et éditeur. Suffisant pour 2 vues, plus simple à défendre.
+- **Graphique en `<div>` Tailwind** (pas de Chart.js) : barres horizontales avec largeur en `%` calculée par computed. Pas de dépendance externe.
+- **Routes API séparées gestion / vue publique** : `/polls/{id}` pour la gestion (auth requise + policy owner), `/polls/by-token/{token}` pour la consultation publique. Préfixe `by-token` pour éviter toute collision de routing.
+- **Unicité du vote pour choix unique** : double défense — contrainte unique en BDD sur `(poll_id, user_id, poll_option_id)` + vérification API qui refuse un second vote (sauf si `allow_vote_change`).
+- **Policy Laravel pour les autorisations** : auto-discovery, centralise `view`, `update`, `delete`, `vote`, `viewResults`. Réutilisable côté API.
+- **Polling 5s** via composable fourni `usePolling`, cleanup automatique au démontage du composant.
 
-7. Créer la base de données et exécuter les migrations :
+## Structure côté frontend
 
-    ```bash
-    php artisan migrate
-    ```
+```
+resources/js/
+├── poll-dashboard.js          ← entrypoint Vite du dashboard
+├── poll-vote.js               ← entrypoint Vite de la page de vote
+├── AppPollDashboard.vue       ← racine du dashboard (toggle list/editor)
+├── AppPollVote.vue            ← racine de la page de vote
+├── components/
+│   ├── PollList.vue
+│   ├── PollEditor.vue
+│   ├── PollVoteForm.vue
+│   └── PollResultsChart.vue
+├── stores/
+│   └── usePollStore.js        ← store unique du dashboard
+└── composables/               ← fournis (useFetchApi, usePolling, ...)
+```
 
-    S'il est nécessaire de réinitialiser la base de données, utiliser la commande `php artisan migrate:reset` puis `php artisan migrate` à nouveau.
+## Endpoints API v1
 
-8. Optionnel : en mode développement, il est possible de peupler la base de données avec des données fictives :
-
-    ```bash
-    php artisan db:seed
-    ```
-
-9. Démarrer le serveur de développement Laravel :
-
-    ```bash
-    composer run dev
-    ```
-
-L'application sera accessible à l'adresse <http://127.0.0.1:8000>.
+| Méthode | URL | Auth | But |
+| --- | --- | --- | --- |
+| GET | `/api/v1/polls` | ✅ | Liste des sondages de l'utilisateur |
+| POST | `/api/v1/polls` | ✅ | Créer un sondage (brouillon) |
+| GET | `/api/v1/polls/{id}` | ✅ owner | Détails d'un sondage |
+| PUT | `/api/v1/polls/{id}` | ✅ owner | Mettre à jour un sondage |
+| DELETE | `/api/v1/polls/{id}` | ✅ owner | Supprimer un sondage |
+| POST | `/api/v1/polls/{id}/start` | ✅ owner | Lancer un sondage |
+| POST | `/api/v1/polls/{id}/options` | ✅ owner | Ajouter une option |
+| PUT | `/api/v1/polls/{id}/options/{opt}` | ✅ owner | Modifier une option |
+| DELETE | `/api/v1/polls/{id}/options/{opt}` | ✅ owner | Supprimer une option |
+| GET | `/api/v1/polls/by-token/{token}` | ❌ | Voir un sondage via son lien |
+| POST | `/api/v1/polls/by-token/{token}/votes` | ✅ | Voter |
+| GET | `/api/v1/polls/by-token/{token}/votes/me` | ✅ | Mon vote actuel |
+| GET | `/api/v1/polls/by-token/{token}/results` | ❌ (policy) | Résultats agrégés |
